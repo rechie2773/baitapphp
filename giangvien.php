@@ -1,4 +1,16 @@
 <?php
+session_start();
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
+// Chỉ admin mới được truy cập
+if ($_SESSION['role_id'] != 2) {
+    header("Location: sinhvien_giangvien.php");
+    exit();
+}
+
 include 'db.php';
 include 'templates/header.php';
 

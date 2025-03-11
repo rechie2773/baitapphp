@@ -1,59 +1,133 @@
 <?php
+session_start();
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
+
 include 'db.php';
 include 'templates/header.php';
 
-// Thêm quan hệ sinh viên - giảng viên
-if (isset($_POST['add'])) {
-    $sinhvien_id = $_POST['sinhvien_id'];
-    $giangvien_id = $_POST['giangvien_id'];
-    $ghichu = $_POST['ghichu'];
+// Kiểm tra quyền Admin
+$isAdmin = ($_SESSION['role_id'] == 2);
 
-    $sql = "INSERT INTO SinhVienGiangVienHuongDan (SinhVienID, GiangVienID, NgayBatDau, GhiChu)
-            VALUES ('$sinhvien_id', '$giangvien_id', CURDATE(), '$ghichu')";
+// Thêm sinh viên
+if ($isAdmin && isset($_POST['add'])) {
+    $hoten = $_POST['hoten'];
+    $masv = $_POST['masv'];
+    $ngaysinh = $_POST['ngaysinh'];
+    $lop = $_POST['lop'];
+    $email = $_POST['email'];
+    $sdt = $_POST['sdt'];
+
+    $sql = "INSERT INTO SinhVien (HoTen, MaSinhVien, NgaySinh, Lop, Email, SoDienThoai) 
+            VALUES ('$hoten', '$masv', '$ngaysinh', '$lop', '$email', '$sdt')";
 
     if ($conn->query($sql) === TRUE) {
-        echo "<div class='alert alert-success'>Thêm quan hệ thành công!</div>";
+        echo "<div class='alert alert-success'>Thêm sinh viên thành công!</div>";
     } else {
         echo "<div class='alert alert-danger'>Lỗi: " . $conn->error . "</div>";
     }
 }
 
-// Lấy danh sách quan hệ
-$result = $conn->query("SELECT * FROM SinhVienGiangVienHuongDan");
+// Xoá sinh viên
+if ($isAdmin && isset($_GET['delete'])) {
+    $id = $_GET['delete'];
+    $sql = "DELETE FROM SinhVien WHERE SinhVienID=$id";
+    if ($conn->query($sql) === TRUE) {
+        echo "<div class='alert alert-success'>Xoá sinh viên thành công!</div>";
+    } else {
+        echo "<div class='alert alert-danger'>Lỗi: " . $conn->error . "</div>";
+    }
+}
+
+// Cập nhật sinh viên
+if ($isAdmin && isset($_POST['update'])) {
+    $id = $_POST['id'];
+    $hoten = $_POST['hoten'];
+    $masv = $_POST['masv'];
+    $ngaysinh = $_POST['ngaysinh'];
+    $lop = $_POST['lop'];
+    $email = $_POST['email'];
+    $sdt = $_POST['sdt'];
+
+    $sql = "UPDATE SinhVien SET HoTen='$hoten', MaSinhVien='$masv', NgaySinh='$ngaysinh', 
+            Lop='$lop', Email='$email', SoDienThoai='$sdt' WHERE SinhVienID=$id";
+
+    if ($conn->query($sql) === TRUE) {
+        echo "<div class='alert alert-success'>Cập nhật thành công!</div>";
+    } else {
+        echo "<div class='alert alert-danger'>Lỗi: " . $conn->error . "</div>";
+    }
+}
+
+// Lấy danh sách sinh viên
+$result = $conn->query("SELECT * FROM SinhVien");
 ?>
 
 <div class="container mt-4">
-    <h2 class="text-center">Danh sách Quan hệ Hướng dẫn</h2>
+    <h2 class="text-center">Danh sách Sinh viên</h2>
 
     <table class="table table-bordered table-striped">
         <thead class="table-dark">
             <tr>
-                <th>ID</th><th>Sinh viên</th><th>Giảng viên</th><th>Ngày bắt đầu</th><th>Ghi chú</th><th>Hành động</th>
+                <th>ID</th><th>Họ Tên</th><th>Mã SV</th><th>Ngày Sinh</th><th>Lớp</th><th>Email</th><th>SĐT</th>
+                <?php if ($isAdmin): ?> 
+                    <th>Hành động</th>
+                <?php endif; ?>
             </tr>
         </thead>
         <tbody>
             <?php while ($row = $result->fetch_assoc()): ?>
             <tr>
-                <td><?= $row['ID'] ?></td>
                 <td><?= $row['SinhVienID'] ?></td>
-                <td><?= $row['GiangVienID'] ?></td>
-                <td><?= $row['NgayBatDau'] ?></td>
-                <td><?= $row['GhiChu'] ?></td>
-                <td>
-                    <a href="sinhvien_giangvien.php?delete=<?= $row['ID'] ?>" class="btn btn-danger btn-sm">Xoá</a>
-                </td>
+                <td><?= $row['HoTen'] ?></td>
+                <td><?= $row['MaSinhVien'] ?></td>
+                <td><?= $row['NgaySinh'] ?></td>
+                <td><?= $row['Lop'] ?></td>
+                <td><?= $row['Email'] ?></td>
+                <td><?= $row['SoDienThoai'] ?></td>
+                <?php if ($isAdmin): ?> 
+                    <td>
+                        <a href="sinhvien.php?edit=<?= $row['SinhVienID'] ?>" class="btn btn-warning btn-sm">Sửa</a>
+                        <a href="sinhvien.php?delete=<?= $row['SinhVienID'] ?>" class="btn btn-danger btn-sm">Xoá</a>
+                    </td>
+                <?php endif; ?>
             </tr>
             <?php endwhile; ?>
         </tbody>
     </table>
 
-    <h2 class="text-center mt-4">Thêm Quan hệ</h2>
+    <!-- Nếu có 'edit' trên URL thì hiển thị form cập nhật -->
+    <?php
+    if ($isAdmin && isset($_GET['edit'])) {
+        $id = $_GET['edit'];
+        $editResult = $conn->query("SELECT * FROM SinhVien WHERE SinhVienID=$id");
+        $editRow = $editResult->fetch_assoc();
+    ?>
+    <h2 class="text-center mt-4">Cập nhật Sinh viên</h2>
     <form method="POST" class="w-50 mx-auto">
-        <input type="text" name="sinhvien_id" class="form-control mb-2" placeholder="ID Sinh viên" required>
-        <input type="text" name="giangvien_id" class="form-control mb-2" placeholder="ID Giảng viên" required>
-        <input type="text" name="ghichu" class="form-control mb-2" placeholder="Ghi chú">
+        <input type="hidden" name="id" value="<?= $editRow['SinhVienID'] ?>">
+        <input type="text" name="hoten" class="form-control mb-2" value="<?= $editRow['HoTen'] ?>" required>
+        <input type="text" name="masv" class="form-control mb-2" value="<?= $editRow['MaSinhVien'] ?>" required>
+        <input type="date" name="ngaysinh" class="form-control mb-2" value="<?= $editRow['NgaySinh'] ?>" required>
+        <input type="text" name="lop" class="form-control mb-2" value="<?= $editRow['Lop'] ?>" required>
+        <input type="email" name="email" class="form-control mb-2" value="<?= $editRow['Email'] ?>" required>
+        <input type="text" name="sdt" class="form-control mb-2" value="<?= $editRow['SoDienThoai'] ?>">
+        <button type="submit" name="update" class="btn btn-success">Cập nhật</button>
+    </form>
+    <?php } elseif ($isAdmin) { ?>
+    <h2 class="text-center mt-4">Thêm Sinh viên</h2>
+    <form method="POST" class="w-50 mx-auto">
+        <input type="text" name="hoten" class="form-control mb-2" placeholder="Họ tên" required>
+        <input type="text" name="masv" class="form-control mb-2" placeholder="Mã SV" required>
+        <input type="date" name="ngaysinh" class="form-control mb-2" required>
+        <input type="text" name="lop" class="form-control mb-2" placeholder="Lớp" required>
+        <input type="email" name="email" class="form-control mb-2" placeholder="Email" required>
+        <input type="text" name="sdt" class="form-control mb-2" placeholder="Số điện thoại">
         <button type="submit" name="add" class="btn btn-primary">Thêm</button>
     </form>
+    <?php } ?>
 </div>
 
 <?php include 'templates/footer.php'; ?>
