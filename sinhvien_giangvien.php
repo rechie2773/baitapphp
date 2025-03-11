@@ -1,5 +1,6 @@
 <?php
 include 'db.php';
+include 'templates/header.php';
 
 // Thêm quan hệ sinh viên - giảng viên
 if (isset($_POST['add'])) {
@@ -11,44 +12,48 @@ if (isset($_POST['add'])) {
             VALUES ('$sinhvien_id', '$giangvien_id', CURDATE(), '$ghichu')";
 
     if ($conn->query($sql) === TRUE) {
-        echo "Thêm thành công!";
+        echo "<div class='alert alert-success'>Thêm quan hệ thành công!</div>";
     } else {
-        echo "Lỗi: " . $conn->error;
+        echo "<div class='alert alert-danger'>Lỗi: " . $conn->error . "</div>";
     }
 }
 
-// Hiển thị danh sách
+// Lấy danh sách quan hệ
 $result = $conn->query("SELECT * FROM SinhVienGiangVienHuongDan");
 ?>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Quan hệ Sinh viên - Giảng viên</title>
-</head>
-<body>
-    <h2>Danh sách quan hệ hướng dẫn</h2>
-    <table border="1">
-        <tr>
-            <th>ID</th><th>Sinh viên</th><th>Giảng viên</th><th>Ngày bắt đầu</th><th>Ghi chú</th><th>Hành động</th>
-        </tr>
-        <?php while ($row = $result->fetch_assoc()): ?>
-        <tr>
-            <td><?= $row['ID'] ?></td>
-            <td><?= $row['SinhVienID'] ?></td>
-            <td><?= $row['GiangVienID'] ?></td>
-            <td><?= $row['NgayBatDau'] ?></td>
-            <td><?= $row['GhiChu'] ?></td>
-            <td><a href="sinhvien_giangvien.php?delete=<?= $row['ID'] ?>">Xoá</a></td>
-        </tr>
-        <?php endwhile; ?>
+
+<div class="container mt-4">
+    <h2 class="text-center">Danh sách Quan hệ Hướng dẫn</h2>
+
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th><th>Sinh viên</th><th>Giảng viên</th><th>Ngày bắt đầu</th><th>Ghi chú</th><th>Hành động</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php while ($row = $result->fetch_assoc()): ?>
+            <tr>
+                <td><?= $row['ID'] ?></td>
+                <td><?= $row['SinhVienID'] ?></td>
+                <td><?= $row['GiangVienID'] ?></td>
+                <td><?= $row['NgayBatDau'] ?></td>
+                <td><?= $row['GhiChu'] ?></td>
+                <td>
+                    <a href="sinhvien_giangvien.php?delete=<?= $row['ID'] ?>" class="btn btn-danger btn-sm">Xoá</a>
+                </td>
+            </tr>
+            <?php endwhile; ?>
+        </tbody>
     </table>
 
-    <h2>Thêm quan hệ</h2>
-    <form method="POST">
-        <input type="text" name="sinhvien_id" placeholder="ID Sinh viên" required><br>
-        <input type="text" name="giangvien_id" placeholder="ID Giảng viên" required><br>
-        <input type="text" name="ghichu" placeholder="Ghi chú"><br>
-        <button type="submit" name="add">Thêm</button>
+    <h2 class="text-center mt-4">Thêm Quan hệ</h2>
+    <form method="POST" class="w-50 mx-auto">
+        <input type="text" name="sinhvien_id" class="form-control mb-2" placeholder="ID Sinh viên" required>
+        <input type="text" name="giangvien_id" class="form-control mb-2" placeholder="ID Giảng viên" required>
+        <input type="text" name="ghichu" class="form-control mb-2" placeholder="Ghi chú">
+        <button type="submit" name="add" class="btn btn-primary">Thêm</button>
     </form>
-</body>
-</html>
+</div>
+
+<?php include 'templates/footer.php'; ?>
